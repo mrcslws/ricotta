@@ -17,14 +17,11 @@ def get_ricotta_js():
 def init_notebook_mode():
     script_inject = u"""
     <script type='text/javascript'>
-      console.log("I'm trying!");
       if(!window.ricotta) {{
-              console.log("Adding it!");
         define('ricotta', function(require, exports, module) {{
           {script}
         }});
         require(['ricotta'], function(ricotta) {{
-          console.log("Setting it!");
           window.ricotta = ricotta;
         }});
       }}
@@ -73,8 +70,12 @@ def print_sankey_sequence_diagram(sequences):
     fill-opacity: .8;
     }
 
+    div.ricotta-output svg {
+    max-width: initial;
+    }
+
     </style>
-    <div id="%s" style="-webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
+    <div class="ricotta-output" id="%s" style="-webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none; font: 10px sans-serif;"></div>
     <script>
     // require(['d3', 'd3-scale-chromatic', 'ricotta'], function(d3, asdf, ricotta) {
