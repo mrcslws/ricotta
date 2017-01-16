@@ -4,14 +4,12 @@ import * as d3ScaleChromatic from  "d3-scale-chromatic";
 // Use a single color scale for every diagram.
 var color = null;
 
-function insertDiagram2(element, csvText, pixelsPerUnit) {
+function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders) {
 
   if (color == null) {
     color = d3.scaleOrdinal(d3ScaleChromatic.schemeDark2)
       .domain(d3.range(8));
   }
-
-  pixelsPerUnit = pixelsPerUnit || 1;
 
   var svg = d3.select(element).append("svg"),
   container = svg.append("g").attr("transform", "translate(0, 5)"),
@@ -130,19 +128,12 @@ function insertDiagram2(element, csvText, pixelsPerUnit) {
     }
   });
 
-  var oddSyllableSortOrder = ["high, flat", "high, gliss.desc", "high, gliss.asc",
-                              "low, flat", "low, gliss.desc", "low, gliss.asc",
-                              "End"];
-  var evenSyllableSortOrder = ["low, flat", "low, gliss.desc", "low, gliss.asc",
-                               "high, flat", "high, gliss.desc", "high, gliss.asc",
-                               "End"];
-
-  allNodes.forEach((nodes, i) => {
-    const sortOrder = (i + 1) % 2 == 0
-          ? evenSyllableSortOrder
-      : oddSyllableSortOrder;
-    nodes.sort((a,b) => sortOrder.indexOf(a.id) - sortOrder.indexOf(b.id));
-  });
+  if (sortOrders) {
+    allNodes.forEach((nodes, i) => {
+      const order = sortOrders[i % sortOrders.length];
+      nodes.sort((a,b) => order.indexOf(a.id) - order.indexOf(b.id));
+    });
+  }
 
   var verticalSpace = 0;
   var horizontalSpace = x(allLinks.length);
@@ -162,33 +153,26 @@ function insertDiagram2(element, csvText, pixelsPerUnit) {
 
   // Add sourceObject and targetObject for each link.
   allLinks.forEach((links, linkPosition) => {
-    let sourceNodes = allNodes[linkPosition],
-        targetNodes = allNodes[linkPosition + 1];
-
     links.forEach(link => {
+      link.sourceObject = allNodes[linkPosition].find(d => d.id == link.source);
+      link.targetObject = allNodes[linkPosition+1].find(d => d.id == link.target);
       link.dy = y(link.value);
     });
 
-    // The ordering of the links themselves doesn't matter.
-    // It's their positions on the source and target objects
-    // that matter. So there are two orderings.
-
-    var sourceSortOrder, targetSortOrder;
-    if (linkPosition % 2 == 0) {
-      sourceSortOrder = oddSyllableSortOrder;
-      targetSortOrder = evenSyllableSortOrder;
-    } else {
-      sourceSortOrder = evenSyllableSortOrder;
-      targetSortOrder = oddSyllableSortOrder;
-    }
+    // The ordering of the links themselves doesn't matter. It's their positions
+    // on the source and target objects that matter. So there are two
+    // orderings. Sort them one way, compute the source coordinates, sort them
+    // the other way, and compute the target coordinates.
 
     links.sort((a, b) => {
-      var ret;
-      var primary = sourceSortOrder.indexOf(a.source) -
-          sourceSortOrder.indexOf(b.source);
+      let ret;
+      const primary =
+            allNodes[linkPosition].indexOf(a.sourceObject) -
+            allNodes[linkPosition].indexOf(b.sourceObject);
       if (primary == 0) {
-        ret = targetSortOrder.indexOf(a.target) -
-          targetSortOrder.indexOf(b.target);
+        ret =
+          allNodes[linkPosition+1].indexOf(a.targetObject) -
+          allNodes[linkPosition+1].indexOf(b.targetObject);
       } else {
         ret = primary;
       }
@@ -204,7 +188,7 @@ function insertDiagram2(element, csvText, pixelsPerUnit) {
       if (prevSource == null || link.source != prevSource) {
         prevSource = link.source;
 
-        link.sourceObject = sourceNodes.find(d => d.id == link.source);
+        link.sourceObject = allNodes[linkPosition].find(d => d.id == link.source);
         link.sy = 0;
       } else {
         link.sourceObject = prevLink.sourceObject;
@@ -215,14 +199,19 @@ function insertDiagram2(element, csvText, pixelsPerUnit) {
     });
 
     links.sort((a, b) => {
-      var primary = targetSortOrder.indexOf(a.target) -
-        targetSortOrder.indexOf(b.target);
+      let ret;
+      const primary =
+            allNodes[linkPosition+1].indexOf(a.targetObject) -
+            allNodes[linkPosition+1].indexOf(b.targetObject);
       if (primary == 0) {
-        return sourceSortOrder.indexOf(a.source) -
-          sourceSortOrder.indexOf(b.source);
+        ret =
+          allNodes[linkPosition].indexOf(a.sourceObject) -
+          allNodes[linkPosition].indexOf(b.sourceObject);
       } else {
-        return primary;
+        ret = primary;
       }
+
+      return ret;
     });
 
     var prevTarget = null;
@@ -232,7 +221,7 @@ function insertDiagram2(element, csvText, pixelsPerUnit) {
       if (prevTarget == null || link.target != prevTarget) {
         prevTarget = link.target;
 
-        link.targetObject = targetNodes.find(d => d.id == link.target);
+        link.targetObject = allNodes[linkPosition+1].find(d => d.id == link.target);
         link.ty = 0;
       } else {
         link.targetObject = prevLink.targetObject;
@@ -340,8 +329,18 @@ function insertDiagram2(element, csvText, pixelsPerUnit) {
 
 function insertDiagram(id, csvUrl, pixelsPerUnit) {
 
+  let oddSyllableSortOrder = ["high, flat", "high, gliss.desc", "high, gliss.asc",
+                              "low, flat", "low, gliss.desc", "low, gliss.asc",
+                              "End"];
+  let evenSyllableSortOrder = ["low, flat", "low, gliss.desc", "low, gliss.asc",
+                               "high, flat", "high, gliss.desc", "high, gliss.asc",
+                               "End"];
+
+  pixelsPerUnit = pixelsPerUnit | 1;
+
   d3.text(csvUrl, (error, text) => {
-    insertDiagram2(document.getElementById(id), text, pixelsPerUnit);
+    insertDiagram2(document.getElementById(id), text, pixelsPerUnit,
+                   [oddSyllableSortOrder, evenSyllableSortOrder]);
   });
 
 }

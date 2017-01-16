@@ -2,6 +2,7 @@ import csv
 import io
 import os
 import uuid
+import numbers
 
 from pkg_resources import resource_string
 
@@ -31,7 +32,16 @@ def init_notebook_mode():
     display(HTML(script_inject))
 
 
-def print_sankey_sequence_diagram(sequences):
+def print_sankey_sequence_diagram(sequences, sortOrders=None):
+
+    if sortOrders is not None and len(sortOrders) > 0:
+        if isinstance(sortOrders[0], numbers.Number):
+            sortOrdersText = "%s" % [sortOrders]
+        else:
+            sortOrdersText = "%s" % sortOrders
+    else:
+        sortOrdersText = "null"
+
     with io.BytesIO() as textOut:
         csvOut = csv.writer(textOut)
         csvOut.writerows(sequences)
@@ -79,10 +89,11 @@ def print_sankey_sequence_diagram(sequences):
     -ms-user-select: none; user-select: none; font: 10px sans-serif;"></div>
     <script>
     // require(['d3', 'd3-scale-chromatic', 'ricotta'], function(d3, asdf, ricotta) {
-    ricotta.insertDiagram2(document.getElementById('%s'), '%s');
+    ricotta.insertDiagram2(document.getElementById('%s'), '%s', 1, %s);
     // });
     </script>
     """ % (elementId, elementId,
-        sequencesCsvText.replace('\r', '\\r').replace('\n', '\\n'))
+           sequencesCsvText.replace('\r', '\\r').replace('\n', '\\n'),
+           sortOrdersText)
 
     display(HTML(addChart))
