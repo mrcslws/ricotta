@@ -88,9 +88,9 @@ def print_sankey_sequence_diagram(sequences, sortOrders=None):
     <div class="ricotta-output" id="%s" style="-webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none; font: 10px sans-serif;"></div>
     <script>
-    // require(['d3', 'd3-scale-chromatic', 'ricotta'], function(d3, asdf, ricotta) {
-    ricotta.insertDiagram2(document.getElementById('%s'), '%s', 1, %s);
-    // });
+    require(['ricotta'], function(ricotta) {
+      ricotta.insertDiagram2(document.getElementById('%s'), '%s', 1, %s);
+    });
     </script>
     """ % (elementId, elementId,
            sequencesCsvText.replace('\r', '\\r').replace('\n', '\\n'),
