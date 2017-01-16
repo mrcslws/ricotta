@@ -1,0 +1,9 @@
+var tape = require("tape"),
+    ricotta = require("../");
+
+tape("ricotta.insertDiagram2 is defined", function(test) {
+  if (!ricotta.insertDiagram2) {
+    test.error("It's not defined!");
+  }
+  test.end();
+});

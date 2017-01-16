@@ -1,0 +1,31 @@
+{
+  "name": "ricotta",
+  "version": "0.0.1",
+  "description": "",
+  "keywords": [],
+  "license": "BSD-3-Clause",
+  "main": "build/ricotta-bundle.js",
+  "jsnext:main": "js/index",
+  "homepage": "https://github.com/mrcslws/ricotta",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mrcslws/ricotta.git"
+  },
+  "scripts": {
+    "pretest": "rm -rf build && mkdir build && rollup -c -f umd -n ricotta -o build/ricotta-bundle.js -- js/index.js",
+    "test": "tape 'js/test/**/*-test.js'",
+    "prepublish": "npm run test",
+    "postinstall": "cp build/ricotta-bundle.js py/ricotta/package_data/ricotta-bundle.js",
+    "postpublish": "zip -j build/ricotta.zip -- LICENSE README.md build/ricotta-bundle.js && cp build/ricotta-bundle.js py/ricotta/package_data/ricotta-bundle.js"
+  },
+  "devDependencies": {
+    "rollup": "0.41.4",
+    "rollup-plugin-node-resolve": "^2.0.0",
+    "tape": "4",
+    "uglify-js": "2"
+  },
+  "dependencies": {
+    "d3": "^4.4.1",
+    "d3-scale-chromatic": "^1.1.0"
+  }
+}
