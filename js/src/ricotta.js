@@ -1,14 +1,32 @@
 import * as d3 from "d3";
-import * as d3ScaleChromatic from  "d3-scale-chromatic";
+import * as d3ScaleChromatic from "d3-scale-chromatic";
 
 // Use a single color scale for every diagram.
-var color = null;
+var globalColor = null;
 
-function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders) {
+function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders, colorMapping) {
 
-  if (color == null) {
-    color = d3.scaleOrdinal(d3ScaleChromatic.schemeDark2)
-      .domain(d3.range(8));
+  let color;
+
+  if (colorMapping) {
+    let ks = [],
+        vs = [];
+
+    for (let k in colorMapping) {
+      ks.push(k);
+      vs.push(colorMapping[k]);
+    }
+
+    color = d3.scaleOrdinal()
+      .domain(ks)
+      .range(vs);
+  } else {
+    if (globalColor == null) {
+      globalColor = d3.scaleOrdinal(d3ScaleChromatic.schemeDark2)
+        .domain(d3.range(8));
+    }
+
+    color = globalColor;
   }
 
   var svg = d3.select(element).append("svg"),
@@ -245,7 +263,8 @@ function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders) {
     .selectAll(".element")
     .data(d => d)
     .enter()
-    .append("g")
+      .append("g")
+      .attr("class", "node")
     .attr("transform", d => "translate(0," + d.y + ")");
 
   var nodeWidth = 15;
@@ -254,7 +273,9 @@ function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders) {
     .attr("height", d => d.dy)
     .attr("width", nodeWidth)
     .attr("fill", function(d) { return d.color = color(d.id); })
-    .attr("stroke", function(d) { return d3.rgb(d.color).darker(2); });
+    .attr("stroke", function(d) { return d3.rgb(d.color).darker(2); })
+    .append("title")
+    .text(d => `${d.id}: ${d.count}`);
 
   node.append("text")
     .attr("x", -6)
@@ -267,63 +288,76 @@ function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders) {
     .attr("x", 6 + nodeWidth)
     .attr("text-anchor", "start");
 
-  var link = container.append("g").selectAll(".linkGroup")
-    .data(allLinks)
-    .enter()
+  var linkGroup = container.append("g").selectAll(".linkGroup")
+      .data(allLinks);
+
+  linkGroup = linkGroup.enter()
     .append("g")
-    .attr("class", "linkGroup")
-    .attr("transform", (d, i) => "translate(" + (x(i) + nodeWidth) + ",0)")
-    .selectAll(".link")
-    .data(d => d)
+      .attr("class", "linkGroup")
+      .attr("transform", (d, i) => "translate(" + (x(i) + nodeWidth) + ",0)")
+    .merge(linkGroup);
+
+  var link = linkGroup
+      .selectAll(".link")
+      .data(d => d);
+
+  link = link
     .enter()
     .append("path")
     .attr("class", "link")
-    .attr("fill", d => color(d.source))
-  // .attr("stroke", d => color(d.source))
-    .attr("d", d => {
-      // TODO: stop using stroke-width.
-      // Instead, draw the full path, and close the shape.
-      // So it will basically be this path shifted up and down,
-      // then closed.
-      // var curvature = .5;
-
-      // var x0 = 0,
-      //     x1 = x(1) - nodeWidth,
-      //     xi = d3.interpolateNumber(x0, x1),
-      //     x2 = xi(curvature),
-      //     x3 = xi(1 - curvature),
-      //     y0 = d.sourceObject.y + d.sy + d.dy / 2,
-      //     y1 = d.targetObject.y + d.ty + d.dy / 2;
-
-      // return "M" + x0 + "," + y0
-      //     + "C" + x2 + "," + y0
-      //     + " " + x3 + "," + y1
-      //     + " " + x1 + "," + y1;
-
-
-
-      var curvature = .5,
-      dy = Math.max(1, d.dy);
-
-      var x0 = 0,
-      x1 = x(1) - nodeWidth,
-      xi = d3.interpolateNumber(x0, x1),
-      x2 = xi(curvature),
-      x3 = xi(1 - curvature),
-      y0 = d.sourceObject.y + d.sy,
-      y1 = d.targetObject.y + d.ty;
-      return "M" + x0 + "," + y0
-        + "C" + x2 + "," + y0
-        + " " + x3 + "," + y1
-        + " " + x1 + "," + y1
-        + "L" + x1 + "," + (y1 + dy)
-        + "C" + x3 + "," + (y1 + dy)
-        + " " + x2 + "," + (y0 + dy)
-        + " " + x0 + "," + (y0 + dy)
-        + "Z";
+    .call(entering => {
+      entering.append("title");
     })
-  // .attr("stroke-width", d => Math.max(1, d.dy))
-    .sort(function(a, b) { return b.dy - a.dy; });
+    .merge(link);
+
+  link.attr("fill", d => color(d.source))
+        // .attr("stroke", d => color(d.source))
+        .attr("d", d => {
+          // TODO: stop using stroke-width.
+          // Instead, draw the full path, and close the shape.
+          // So it will basically be this path shifted up and down,
+          // then closed.
+          // var curvature = .5;
+
+          // var x0 = 0,
+          //     x1 = x(1) - nodeWidth,
+          //     xi = d3.interpolateNumber(x0, x1),
+          //     x2 = xi(curvature),
+          //     x3 = xi(1 - curvature),
+          //     y0 = d.sourceObject.y + d.sy + d.dy / 2,
+          //     y1 = d.targetObject.y + d.ty + d.dy / 2;
+
+          // return "M" + x0 + "," + y0
+          //     + "C" + x2 + "," + y0
+          //     + " " + x3 + "," + y1
+          //     + " " + x1 + "," + y1;
+
+
+
+          var curvature = .5,
+          dy = Math.max(1, d.dy);
+
+          var x0 = 0,
+              x1 = x(1) - nodeWidth,
+              xi = d3.interpolateNumber(x0, x1),
+              x2 = xi(curvature),
+              x3 = xi(1 - curvature),
+              y0 = d.sourceObject.y + d.sy,
+              y1 = d.targetObject.y + d.ty;
+          return "M" + x0 + "," + y0
+            + "C" + x2 + "," + y0
+              + " " + x3 + "," + y1
+              + " " + x1 + "," + y1
+              + "L" + x1 + "," + (y1 + dy)
+              + "C" + x3 + "," + (y1 + dy)
+              + " " + x2 + "," + (y0 + dy)
+              + " " + x0 + "," + (y0 + dy)
+            + "Z";
+        })
+      // .attr("stroke-width", d => Math.max(1, d.dy))
+    .sort(function(a, b) { return b.dy - a.dy; })
+    .select('title')
+    .text(d => `${d.sourceObject.id} → ${d.targetObject.id}: ${d.value}`);
 
 }
 

@@ -1,8 +1,9 @@
 import csv
 import io
+import json
+import numbers
 import os
 import uuid
-import numbers
 
 from pkg_resources import resource_string
 
@@ -16,6 +17,33 @@ def get_ricotta_js():
 
 
 def init_notebook_mode():
+    style_inject = """
+    <style>
+    .link {
+      fill-opacity: .5;
+    }
+
+    .link:hover {
+      fill-opacity: .8;
+    }
+
+    div.ricotta-output {
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+
+      font: 10px sans-serif;
+    }
+
+    div.ricotta-output svg {
+      max-width: initial;
+    }
+
+    </style>
+    """
+
     script_inject = u"""
     <script type='text/javascript'>
       if(!window.ricotta) {{
@@ -29,10 +57,10 @@ def init_notebook_mode():
     </script>
     """.format(script=get_ricotta_js())
 
-    display(HTML(script_inject))
+    display(HTML(style_inject + script_inject))
 
 
-def print_sankey_sequence_diagram(sequences, sortOrders=None):
+def print_sankey_sequence_diagram(sequences, sortOrders=None, colorMapping=None):
 
     if sortOrders is not None and len(sortOrders) > 0:
         if isinstance(sortOrders[0], numbers.Number):
@@ -42,6 +70,11 @@ def print_sankey_sequence_diagram(sequences, sortOrders=None):
     else:
         sortOrdersText = "null"
 
+    if colorMapping is not None:
+        colorMappingText = json.dumps(colorMapping)
+    else:
+        colorMappingText = "null"
+
     with io.BytesIO() as textOut:
         csvOut = csv.writer(textOut)
         csvOut.writerows(sequences)
@@ -50,50 +83,15 @@ def print_sankey_sequence_diagram(sequences, sortOrders=None):
 
     elementId = str(uuid.uuid1())
     addChart = """
-    <style>
-    .group-tick line {
-    stroke: #000;
-    }
-
-    .ribbons {
-    fill-opacity: 0.67;
-    }
-
-    .node rect {
-    cursor: move;
-    fill-opacity: .9;
-    shape-rendering: crispEdges;
-    }
-
-    .node text {
-    pointer-events: none;
-    text-shadow: 0 1px 0 #fff;
-    }
-
-    .link {
-    /*fill: none;*/
-    /*stroke: #000;*/
-    fill-opacity: .5;
-    }
-
-    .link:hover {
-    fill-opacity: .8;
-    }
-
-    div.ricotta-output svg {
-    max-width: initial;
-    }
-
-    </style>
-    <div class="ricotta-output" id="%s" style="-webkit-touch-callout: none; -webkit-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none; font: 10px sans-serif;"></div>
+    <div class="ricotta-output" id="%s"></div>
     <script>
     require(['ricotta'], function(ricotta) {
-      ricotta.insertDiagram2(document.getElementById('%s'), '%s', 1, %s);
+      ricotta.insertDiagram2(document.getElementById('%s'), '%s', 1, %s, %s);
     });
     </script>
     """ % (elementId, elementId,
            sequencesCsvText.replace('\r', '\\r').replace('\n', '\\n'),
-           sortOrdersText)
+           sortOrdersText,
+           colorMappingText)
 
     display(HTML(addChart))

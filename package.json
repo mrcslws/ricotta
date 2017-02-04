@@ -12,10 +12,9 @@
     "url": "https://github.com/mrcslws/ricotta.git"
   },
   "scripts": {
-    "pretest": "rm -rf build && mkdir build && rollup -c -f umd -n ricotta -o build/ricotta-bundle.js -- js/index.js",
+    "pretest": "rm -rf build && mkdir build && rollup -c -f umd -n ricotta -o build/ricotta-bundle.js -- js/index.js && cp build/ricotta-bundle.js py/ricotta/package_data/ricotta-bundle.js",
     "test": "tape 'js/test/**/*-test.js'",
     "prepublish": "npm run test",
-    "postinstall": "cp build/ricotta-bundle.js py/ricotta/package_data/ricotta-bundle.js",
     "postpublish": "zip -j build/ricotta.zip -- LICENSE README.md build/ricotta-bundle.js && cp build/ricotta-bundle.js py/ricotta/package_data/ricotta-bundle.js"
   },
   "devDependencies": {
