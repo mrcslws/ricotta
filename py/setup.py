@@ -4,7 +4,7 @@ import sys
 from setuptools import find_packages, setup
 
 setup(name="ricotta",
-      version="0.0.5",
+      version="0.0.6",
       description="Visualize bird songs",
       author="Marcus Lewis",
       author_email="mrcslws@gmail.com",
