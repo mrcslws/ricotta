@@ -95,7 +95,7 @@ function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders, colorMappin
   ];
 
   var allNodes = [];
-  for (var i = 0; i < allLinks.length; i++) {
+  for (var i = 0; i < allLinks.length + 1; i++) {
     allNodes.push([]);
   }
 
@@ -141,6 +141,23 @@ function insertDiagram2(element, csvText, pixelsPerUnit, sortOrders, colorMappin
         targetNodes.push({
           id: target,
           count: targetCounts[target]
+        });
+      }
+    }
+  });
+
+  // Hack: handle sequences that are length 1 and hence have no links.
+  sequences.forEach(syllables => {
+    if (syllables.length == 1) {
+      let syllable = syllables[0];
+
+      let index = allNodes[0].findIndex(node => node.id == syllable);
+      if (index != -1) {
+        allNodes[0][index].count++;
+      } else {
+        allNodes[0].push({
+          id: syllable,
+          count: 1
         });
       }
     }
