@@ -18,7 +18,7 @@
     "postpublish": "zip -j build/ricotta.zip -- LICENSE README.md build/ricotta-bundle.js && cp build/ricotta-bundle.js py/ricotta/package_data/ricotta-bundle.js"
   },
   "devDependencies": {
-    "rollup": "0.41.4",
+    "rollup": "2.79.2",
     "rollup-plugin-node-resolve": "^2.0.0",
     "tape": "4",
     "uglify-js": "2"
